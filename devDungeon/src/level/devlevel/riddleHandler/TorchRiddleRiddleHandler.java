@@ -192,7 +192,10 @@ public class TorchRiddleRiddleHandler implements ITickable {
     int amount = this.level.RANDOM.nextInt(2, numbers.size());
     List<Integer> randomNumbers =
         ArrayUtils.getRandomElements(numbers.toArray(new Integer[0]), amount);
-    return randomNumbers.stream().mapToInt(Integer::intValue).sum();
+    return randomNumbers
+            .stream()
+            .mapToInt(Integer::intValue)
+            .sum();
   }
 
   /**
@@ -221,6 +224,11 @@ public class TorchRiddleRiddleHandler implements ITickable {
    * @return The sum of the values of all lit torches in the game.
    */
   private int getSumOfLitTorches() {
-    throw new UnsupportedOperationException("Not implemented yet.");
+      return Game.entityStream()
+          .filter(e -> e.isPresent(TorchComponent.class)) // nur Entities mit TorchComponent
+          .map(e -> e.fetch(TorchComponent.class).orElseThrow()) // optional auflösen
+          .filter(tc -> tc.lit() && tc.value() > 0) // brennende Fackeln mit Wert > 0
+          .mapToInt(TorchComponent::value) // Wert extrahieren
+          .sum(); // summieren
   }
 }
