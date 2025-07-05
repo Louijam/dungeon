@@ -184,9 +184,9 @@ public enum MonsterType {
               9f,
               0f,
               new Skill(
-                  new TPBallSkill(
-                      SkillTools::heroPositionAsPoint,
-                      LevelUtils.getRandomTPTargetForCurrentLevel()),
+                  new TPBallSkillNoTeleport(
+                      SkillTools::heroPositionAsPoint),
+                     //LevelUtils.getRandomTPTargetForCurrentLevel()),
                   AIFactory.FIREBALL_COOL_DOWN * 4)),
       () -> new PatrolWalk(3f, 8, 5, PatrolWalk.MODE.BACK_AND_FORTH),
       () -> new RangeTransition(6, false),

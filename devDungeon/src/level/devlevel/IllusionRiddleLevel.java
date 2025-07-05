@@ -64,7 +64,7 @@ public class IllusionRiddleLevel extends DevDungeonLevel implements ITickable {
   public IllusionRiddleLevel(
       LevelElement[][] layout, DesignLabel designLabel, List<Coordinate> customPoints) {
     super(layout, designLabel, customPoints);
-    ((FogOfWarSystem) Game.systems().get(FogOfWarSystem.class)).active(true);
+    ((FogOfWarSystem) Game.systems().get(FogOfWarSystem.class)).active(false);
     this.riddleHandler = new IllusionRiddleHandler(customPoints, this);
 
     this.rooms =

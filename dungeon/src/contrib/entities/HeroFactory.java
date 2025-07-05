@@ -22,6 +22,7 @@ import core.utils.components.path.SimpleIPath;
 import java.io.IOException;
 import java.util.Comparator;
 
+
 /** A utility class for building the hero entity in the game world. */
 public class HeroFactory {
 
@@ -29,8 +30,8 @@ public class HeroFactory {
   public static final int DEFAULT_INVENTORY_SIZE = 6;
 
   private static final IPath HERO_FILE_PATH = new SimpleIPath("character/wizard");
-  private static final Vector2 SPEED_HERO = new Vector2(7.5f, 7.5f);
-  private static final int FIREBALL_COOL_DOWN = 500;
+  private static final Vector2 SPEED_HERO = new Vector2(7.5f*3, 7.5f*3);
+  private static final int FIREBALL_COOL_DOWN = 100;
   private static final int HERO_HP = 25;
 
   /**
@@ -74,6 +75,7 @@ public class HeroFactory {
 
               DialogFactory.showTextPopup("You died!", "Game Over", Game::exit);
             });
+    hc.godMode(true);
     hero.add(hc);
     hero.add(
         new CollideComponent(

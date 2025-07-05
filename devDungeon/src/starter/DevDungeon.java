@@ -2,7 +2,9 @@ package starter;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
+import contrib.components.HealthComponent;
 import contrib.crafting.Crafting;
+import contrib.entities.HeroFactory;
 import contrib.systems.*;
 import core.Entity;
 import core.Game;
@@ -25,7 +27,7 @@ public class DevDungeon {
             "tutorial", "damagedBridge", "torchRiddle", "illusionRiddle", "bridgeGuard", "finalBoss"
           });
   private static final String BACKGROUND_MUSIC = "sounds/background.wav";
-  private static final boolean SKIP_TUTORIAL = false;
+  private static final boolean SKIP_TUTORIAL = true;
 
   public static void main(String[] args) throws IOException {
     Game.initBaseLogger(Level.WARNING);
@@ -67,7 +69,7 @@ public class DevDungeon {
           setupMusic();
           Crafting.loadRecipes();
           if (SKIP_TUTORIAL) {
-            DUNGEON_LOADER.loadLevel(DUNGEON_LOADER.levelOrder()[1]); // First Level
+            DUNGEON_LOADER.loadLevel(DUNGEON_LOADER.levelOrder()[3]); // First Level
           } else {
             DUNGEON_LOADER.loadLevel(DUNGEON_LOADER.levelOrder()[0]); // Tutorial
           }

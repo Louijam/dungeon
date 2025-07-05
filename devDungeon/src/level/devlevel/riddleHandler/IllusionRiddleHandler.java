@@ -22,14 +22,12 @@ public class IllusionRiddleHandler implements ITickable {
   private final Coordinate[][] initTeleporterSpawns;
   private final Coordinate[][] lastTeleporterSpawns;
   private final Coordinate[][] lapCheckpoints; // [location][3 tiles wide]
-  private final Coordinate
-      riddleRewardSpawn; // The spawn point of the reward for solving the riddle
+  private final Coordinate riddleRewardSpawn; // The spawn point of the reward for solving the riddle
   private Coordinate lastHeroPos = new Coordinate(0, 0);
   private boolean rewardGiven = false;
   private int lapCounter = 0;
   private int lapProgress = 0;
-  private int lastCheckpoint =
-      -2; // Initialize with -2 to indicate no checkpoints have been passed yet
+  private int lastCheckpoint =      -2; // Initialize with -2 to indicate no checkpoints have been passed yet
   private boolean thirdRoom = false;
 
   public IllusionRiddleHandler(List<Coordinate> customPoints, TileLevel level) {
@@ -59,6 +57,7 @@ public class IllusionRiddleHandler implements ITickable {
   public void onTick(boolean isFirstTick) {
     if (isFirstTick) {
       this.handleFirstTick();
+      this.giveReward();
     }
 
     this.handleLapRoomLogic();
@@ -88,8 +87,8 @@ public class IllusionRiddleHandler implements ITickable {
             + " laps!"
             + "You now can see and attack further than before.",
         "Run " + LAP_REWARD + " Laps");
-    CameraSystem.camera().zoom += 0.1f;
-    BurningFireballSkill.PROJECTILE_RANGE += 1f;
+    CameraSystem.camera().zoom += 0.3f;
+    BurningFireballSkill.PROJECTILE_RANGE += 7f;
     DevHeroFactory.updateSkill();
     this.rewardGiven = true;
     this.level.tileAt(this.riddleRewardSpawn).tintColor(-1);

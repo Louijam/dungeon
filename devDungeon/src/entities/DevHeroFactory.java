@@ -3,6 +3,7 @@ package entities;
 import com.badlogic.gdx.ai.pfa.GraphPath;
 import com.badlogic.gdx.math.Vector2;
 import components.PathComponent;
+import contrib.components.HealthComponent;
 import contrib.components.InteractionComponent;
 import contrib.components.UIComponent;
 import contrib.configuration.KeyboardConfig;
@@ -114,6 +115,7 @@ public class DevHeroFactory extends HeroFactory {
     }
     return hero;
   }
+
 
   private static void registerMouseLeftClick(PlayerComponent pc) {
     if (!Objects.equals(

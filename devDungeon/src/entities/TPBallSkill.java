@@ -65,22 +65,6 @@ public final class TPBallSkill extends DamageProjectile {
         });
     this.tintColor(0xFF00FFFF);
   }
-
-  @Override
-  protected Sound playSound() {
-    Sound soundEffect = Gdx.audio.newSound(Gdx.files.internal(PROJECTILE_SOUND.pathString()));
-
-    // Generate a random pitch between 1.5f and 2.0f
-    float minPitch = 2f;
-    float maxPitch = 3f;
-    float randomPitch = MathUtils.random(minPitch, maxPitch);
-
-    // Play the sound with the adjusted pitch
-    long soundId = soundEffect.play();
-    soundEffect.setPitch(soundId, randomPitch);
-
-    // Set the volume
-    soundEffect.setVolume(soundId, 0.05f);
-    return soundEffect;
-  }
 }
+
+
