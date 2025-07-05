@@ -57,7 +57,6 @@ public class IllusionRiddleHandler implements ITickable {
   public void onTick(boolean isFirstTick) {
     if (isFirstTick) {
       this.handleFirstTick();
-      this.giveReward();
     }
 
     this.handleLapRoomLogic();
@@ -87,8 +86,8 @@ public class IllusionRiddleHandler implements ITickable {
             + " laps!"
             + "You now can see and attack further than before.",
         "Run " + LAP_REWARD + " Laps");
-    CameraSystem.camera().zoom += 0.3f;
-    BurningFireballSkill.PROJECTILE_RANGE += 7f;
+    CameraSystem.camera().zoom += 0.1f;
+    BurningFireballSkill.PROJECTILE_RANGE += 5f;
     DevHeroFactory.updateSkill();
     this.rewardGiven = true;
     this.level.tileAt(this.riddleRewardSpawn).tintColor(-1);

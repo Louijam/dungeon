@@ -14,6 +14,7 @@ import core.Entity;
 import core.Game;
 import core.components.PositionComponent;
 import core.level.Tile;
+import core.level.elements.ILevel;
 import core.level.elements.tile.DoorTile;
 import core.level.elements.tile.ExitTile;
 import core.level.elements.tile.PitTile;
@@ -148,52 +149,75 @@ public class IllusionRiddleLevel extends DevDungeonLevel implements ITickable {
     this.chestSpawns = new Coordinate[] {this.customPoints().get(161)};
   }
 
-  @Override
-  public void onTick(boolean isFirstTick) {
-    if (isFirstTick) {
+
+  public void showIntroPopup(){
       DialogFactory.showTextPopup(
           "Wait, who turned off the lights? Try to find a way out of this dark place.",
           "Level " + DevDungeon.DUNGEON_LOADER.currentLevelIndex() + ": The Illusion Riddle");
+  }
 
+  public void closeExitAndDoors(){
       ((ExitTile) this.endTile()).close(); // close exit at start (to force defeating the boss)
       this.doorTiles().forEach(DoorTile::close);
-      this.pitTiles()
-          .forEach(
-              pit -> {
-                pit.timeToOpen(50L * Game.currentLevel().RANDOM.nextInt(1, 5));
-                pit.close();
-              });
-      this.rooms.forEach(DevDungeonRoom::spawnEntities);
+  }
 
+  public void createTP(){
       // Create teleporters
       for (int i = 65; i < 127; i += 2) {
-        TeleporterSystem.getInstance()
-            .registerTeleporter(
-                new Teleporter(this.customPoints().get(i), this.customPoints().get(i + 1)));
+          TeleporterSystem.getInstance()
+              .registerTeleporter(
+                  new Teleporter(this.customPoints().get(i), this.customPoints().get(i + 1)));
       }
+  }
 
+  public void setupTPTarget(){
       // Setup TP Targets for TPBallSkill
       int[] roomIndices = {0, 1, 2, 3, 7};
       for (int ri : roomIndices) {
-        this.addTPTarget(
-            this.rooms.get(ri).tiles().stream()
-                .filter(tile -> tile.levelElement() == LevelElement.FLOOR)
-                .map(Tile::coordinate)
-                .toArray(Coordinate[]::new));
+          this.addTPTarget(
+              this.rooms.get(ri).tiles().stream()
+                  .filter(tile -> tile.levelElement() == LevelElement.FLOOR)
+                  .map(Tile::coordinate)
+                  .toArray(Coordinate[]::new));
       }
+  }
 
+  public void setupInitialPits(){
+      this.pitTiles()
+          .forEach(
+              pit -> {
+                  pit.timeToOpen(50L * ILevel.RANDOM.nextInt(1, 5));
+                  pit.close();
+              });
+  }
+
+  public void setupBossRoomEnvironment(){
+      openBossRoomPits();
+      deactivateBossRoomTorches();
+  }
+
+  public void openBossRoomPits(){
       // Open Pits for last room (boss room) and extinguish torches
       this.rooms.getLast().tiles().stream()
           .filter(t -> t.levelElement() == LevelElement.PIT)
           .map(t -> (PitTile) t)
           .forEach(PitTile::open);
-      for (Entity torch : this.rooms.getLast().torches()) {
-        torch
-            .fetch(InteractionComponent.class)
-            .orElseThrow(() -> MissingComponentException.build(torch, InteractionComponent.class))
-            .triggerInteraction(torch, Game.hero().orElse(null));
-      }
+  }
 
+  public void deactivateBossRoomTorches(){
+      for (Entity torch : this.rooms.getLast().torches()) {
+          torch
+              .fetch(InteractionComponent.class)
+              .orElseThrow(() -> MissingComponentException.build(torch, InteractionComponent.class))
+              .triggerInteraction(torch, Game.hero().orElse(null));
+      }
+  }
+
+  public void spawnRoomEntities(){
+      this.rooms.forEach(DevDungeonRoom::spawnEntities);
+  }
+
+  public void drawTPConnection(){
       // Draw teleporter connections
       TeleporterSystem.getInstance().teleporter().stream()
           .map(Teleporter::from)
@@ -201,43 +225,50 @@ public class IllusionRiddleLevel extends DevDungeonLevel implements ITickable {
       TeleporterSystem.getInstance().teleporter().stream()
           .map(Teleporter::to)
           .forEach((tp) -> this.tileAt(tp).tintColor(0x444444FF)); // dark tint for teleporter
+  }
 
+  public void initializeBossFight(){
       Entity b =
           EntityUtils.spawnBoss(
               BOSS_TYPE,
               this.levelBossSpawn,
               (e) -> {
-                ((FogOfWarSystem) Game.systems().get(FogOfWarSystem.class)).active(false);
-                // turn of all torches on death
-                DevDungeonRoom devDungeonRoom = this.getCurrentRoom();
-                if (devDungeonRoom == null || devDungeonRoom != this.rooms.getLast()) {
-                  return; // should not happen, just if boss dies while not in boss room
-                }
-                this.lightTorch(devDungeonRoom, 0, false);
-                this.lightTorch(devDungeonRoom, 1, false);
+                  ((FogOfWarSystem) Game.systems().get(FogOfWarSystem.class)).active(false);
+                  // turn of all fog of on boss death
+                  DevDungeonRoom devDungeonRoom = this.getCurrentRoom();
+                  if (devDungeonRoom == null || devDungeonRoom != this.rooms.getLast()) {
+                      return; // should not happen, just if boss dies while not in boss room
+                  }
+                  this.lightTorch(devDungeonRoom, 0, false);
+                  this.lightTorch(devDungeonRoom, 1, false);
 
-                this.exitTiles().forEach(tile -> tile.tintColor(-1)); // Workaround due to FogOfWar
+                  this.exitTiles().forEach(tile -> tile.tintColor(-1)); // Workaround due to FogOfWar
               });
+
+
       HealthComponent bhc =
           b.fetch(HealthComponent.class)
               .orElseThrow(() -> MissingComponentException.build(b, HealthComponent.class));
       bhc.onHit(
           (cause, dmg) -> {
-            int currentHealth = bhc.currentHealthpoints() - dmg.damageAmount();
-            int maxHealth = bhc.maximalHealthpoints();
+              int currentHealth = bhc.currentHealthpoints() - dmg.damageAmount();
+              int maxHealth = bhc.maximalHealthpoints();
 
-            DevDungeonRoom devDungeonRoom = this.getCurrentRoom();
-            if (devDungeonRoom == null || devDungeonRoom != this.rooms.getLast()) {
-              return;
-            }
+              DevDungeonRoom devDungeonRoom = this.getCurrentRoom();
+              if (devDungeonRoom == null || devDungeonRoom != this.rooms.getLast()) {
+                  return;
+              }
 
-            double healthPercentage = (double) currentHealth / maxHealth;
-            if (healthPercentage <= 0.5) {
-              this.lightTorch(devDungeonRoom, 0, true);
-              this.lightTorch(devDungeonRoom, 1, true);
-            }
+              double healthPercentage = (double) currentHealth / maxHealth;
+              if (healthPercentage <= 0.5) {
+                  this.lightTorch(devDungeonRoom, 0, true);
+                  this.lightTorch(devDungeonRoom, 1, true);
+              }
           });
 
+  }
+
+  public void secretPassages(){
       // Secret Passages
       EntityUtils.spawnLever(
           this.leverSpawns[0].toCenteredPoint(),
@@ -249,31 +280,50 @@ public class IllusionRiddleLevel extends DevDungeonLevel implements ITickable {
           this.leverSpawns[2].toCenteredPoint(),
           new OpenPassageCommand(this.secretPassages[2][0], this.secretPassages[2][1]));
       this.spawnChestsAndCauldrons();
+  }
+
+  @Override
+  public void onTick(boolean isFirstTick) {
+    if (isFirstTick) {
+      showIntroPopup();
+      closeExitAndDoors();
+      spawnRoomEntities();
+      createTP();
+      setupTPTarget();
+      setupInitialPits();
+      setupBossRoomEnvironment();
+      drawTPConnection();
+      initializeBossFight();
+      secretPassages();
     }
 
-    if (this.lastRoom != this.getCurrentRoom()) {
-      // Handle Mob AI (disable AI for mobs in other rooms, enable for mobs in current room)
-      if (this.lastRoom != null) {
-        this.lastRoom.mobAI(false);
-      }
-      if (this.getCurrentRoom() != null) {
-        this.getCurrentRoom().mobAI(true);
-      }
-
-      if (this.getCurrentRoom() != null) {
-        for (Entity mob : this.getCurrentRoom().mobs()) {
-          Consumer<Entity> fightAI =
-              mob.fetch(AIComponent.class)
-                  .orElseThrow(() -> MissingComponentException.build(mob, AIComponent.class))
-                  .fightBehavior();
-          if (fightAI instanceof RangeAI rangeAI) {
-            rangeAI.getSkill().setLastUsedToNow();
+      if (this.lastRoom != this.getCurrentRoom()) {
+          // Handle Mob AI (disable AI for mobs in other rooms, enable for mobs in current room)
+          if (this.lastRoom != null) {
+              this.lastRoom.mobAI(false);
           }
-        }
+          if (this.getCurrentRoom() != null) {
+              this.getCurrentRoom().mobAI(true);
+          }
+
+          if (this.getCurrentRoom() != null) {
+              for (Entity mob : this.getCurrentRoom().mobs()) {
+                  Consumer<Entity> fightAI =
+                      mob.fetch(AIComponent.class)
+                          .orElseThrow(() -> MissingComponentException.build(mob, AIComponent.class))
+                          .fightBehavior();
+                  if (fightAI instanceof RangeAI rangeAI) {
+                      rangeAI.getSkill().setLastUsedToNow();
+                  }
+              }
+          }
+
+          this.lastRoom = this.getCurrentRoom();
       }
 
-      this.lastRoom = this.getCurrentRoom();
-    }
+
+
+
 
     // Anti Torch Logic
     if (this.lastRoom != null && this.lastTorchState != this.lastRoom.isAnyTorchActive()) {
@@ -291,20 +341,35 @@ public class IllusionRiddleLevel extends DevDungeonLevel implements ITickable {
     this.riddleHandler.onTick(isFirstTick);
   }
 
-  /** TODO: Refactor this method, and add JavaDoc */
+
+
+  /**
+   * Schaltet die Fackel an Position {@code i} im übergebenen Raum {@code r} an oder aus.
+   *
+   * Die Methode prüft zuerst, ob die Fackel im gewünschtem Zustand ist
+   * (eingeschaltet bzw. ausgeschaltet). Falls ja, passiert nichts.
+   * Andernfalls wird die Interaktion ausgelöst, die den Zustand der Fackel wechselt.
+   *
+   * @param r Der Raum, in dem sich die Fackel befindet
+   * @param i Der Index der Fackel im Fackelarray des Raumes.
+   * @param lit Der gewünschte Zustand der Fackel:{@code true} für an, {@code false} für aus.
+   *
+   * @throws MissingComponentException Falls die Fackel die erwarteten Komponenten nicht hat.
+   */
   public void lightTorch(DevDungeonRoom r, int i, boolean lit) {
-    if (r.torches()[i]
-            .fetch(TorchComponent.class)
-            .orElseThrow(
-                () -> MissingComponentException.build(r.torches()[i], TorchComponent.class))
-            .lit()
-        == lit) return;
-    r.torches()[i]
-        .fetch(InteractionComponent.class)
-        .orElseThrow(
-            () -> MissingComponentException.build(r.torches()[i], InteractionComponent.class))
-        .triggerInteraction(r.torches()[i], Game.hero().orElse(null));
-  }
+      Entity torch=r.torches()[i];
+
+      TorchComponent torchComponent=torch.fetch(TorchComponent.class)
+          .orElseThrow(() -> MissingComponentException.build(torch, TorchComponent.class));
+
+      if (torchComponent.lit()==lit)
+          return;
+
+    InteractionComponent interactionComponent=torch.fetch(InteractionComponent.class)
+        .orElseThrow(() -> MissingComponentException.build(torch, InteractionComponent.class));
+
+    interactionComponent.triggerInteraction(torch, Game.hero().orElse(null));
+    }
 
   /**
    * Returns the current room the hero is in.
